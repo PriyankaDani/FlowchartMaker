@@ -1,0 +1,3 @@
+# `Flowchart` uses a flat graph model (ID-referenced nodes/edges), not nested/pointer-style nodes
+
+`Flowchart` stores `nodes` and `edges` (`Branch`) as two flat lists, edges referencing node IDs, rather than nodes holding pointers to their own successors (e.g. `Step.next: Node`). Pointer-style nesting can't represent a node with multiple incoming edges without duplicating it, which real process descriptions need (converging branches, loop-backs to an earlier step). The flat/ID-referenced shape costs more validation work (checking every edge's `target_id` resolves to a real node) but is what makes convergence, loops, and later Mermaid-syntax generation tractable. A future reader simplifying this back to nested pointers would silently break convergence and loop support.
