@@ -9,8 +9,8 @@ A generic retry loop that wraps a "parse once" call, catches `FlowchartValidatio
 
 ## Entry Conditions
 
-- `010_structured_validation_feedback` — Todo (defines `FlowchartValidationError.to_llm_feedback()`, which this ticket consumes)
-- `002_text_parsing_chain` — Todo (provides the `parse` callable this loop wraps)
+- `010_structured_validation_feedback` — Done (defines `FlowchartValidationError.to_llm_feedback()`, which this ticket consumes)
+- `002_text_parsing_chain` — Done (provides the `parse` callable this loop wraps)
 
 ## Tasks
 
