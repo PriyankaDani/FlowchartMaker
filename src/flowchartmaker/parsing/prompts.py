@@ -1,5 +1,6 @@
 import json
 
+from langchain_core.messages import SystemMessage
 from langchain_core.prompts import ChatPromptTemplate
 
 SYSTEM_PROMPT = """You are a flowchart extraction assistant. You convert a description of a \
@@ -68,3 +69,22 @@ def build_prompt(text: str):
     return _PROMPT.invoke(
         {"text": text, "example_output": json.dumps(_EXAMPLE_OUTPUT)}
     )
+
+
+VISION_SYSTEM_PROMPT = """You describe hand-drawn flowchart sketches in plain, free-form prose for a \
+downstream text-parsing step -- you do not extract structured data yourself.
+
+Rules:
+- Describe every shape you see (boxes, diamonds, ovals/stadiums, ellipses) and what its label \
+says, plus every arrow and any text label written on or beside that arrow.
+- Do not invent shapes, labels, or arrows that are not actually visible in the image.
+- If the image does not contain a legible flowchart sketch -- because it is blank, contains \
+unrelated content (e.g. a photo of a person or object), or is too messy/scribbled to make out \
+any discernible shapes or arrows -- respond with exactly one line starting with "UNREADABLE:" \
+followed by a short human-readable reason, and nothing else. Only use this response when you \
+genuinely cannot identify shapes or arrows; do not use it merely because the sketch is untidy \
+but still legible."""
+
+
+def build_vision_system_message() -> SystemMessage:
+    return SystemMessage(content=VISION_SYSTEM_PROMPT)

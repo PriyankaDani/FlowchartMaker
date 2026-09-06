@@ -13,24 +13,41 @@ class LLMProvider:
     def __init__(self, settings: Settings | None = None) -> None:
         self._settings = settings or Settings()
         self._chat_model = self._build_chat_model()
+        self._vision_chat_model: BaseChatModel | None = None
 
     @property
     def chat_model(self) -> BaseChatModel:
         return self._chat_model
 
+    @property
+    def vision_chat_model(self) -> BaseChatModel:
+        if self._vision_chat_model is None:
+            self._vision_chat_model = self._build_vision_chat_model()
+        return self._vision_chat_model
+
     def _build_chat_model(self) -> BaseChatModel:
         provider = self._settings.llm_provider
         if provider == "ollama":
-            return self._build_ollama()
+            return self._build_ollama(self._settings.ollama_model)
         if provider == "gemini":
             return self._build_gemini()
         raise LLMConfigurationError(
             f"Unknown LLM_PROVIDER {provider!r}. Expected 'ollama' or 'gemini'."
         )
 
-    def _build_ollama(self) -> BaseChatModel:
+    def _build_vision_chat_model(self) -> BaseChatModel:
+        provider = self._settings.llm_provider
+        if provider == "ollama":
+            return self._build_ollama(self._settings.ollama_vision_model)
+        if provider == "gemini":
+            # Gemini's chat models are already multimodal -- no separate model needed.
+            return self._chat_model
+        raise LLMConfigurationError(
+            f"Unknown LLM_PROVIDER {provider!r}. Expected 'ollama' or 'gemini'."
+        )
+
+    def _build_ollama(self, model_name: str) -> BaseChatModel:
         base_url = self._settings.ollama_base_url
-        model_name = self._settings.ollama_model
         try:
             ollama.Client(host=base_url).list()
         except Exception as exc:
