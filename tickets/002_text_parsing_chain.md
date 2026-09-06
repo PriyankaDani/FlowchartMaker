@@ -10,6 +10,7 @@ component: text_parsing_chain
 ## Entry Conditions
 
 - `001_domain_model` — Done (uses `Flowchart`, `Branch`, `Node` types; raises `FlowchartValidationError`, `EmptyInputError`)
+- `docs/adr/0004-node-type-discriminator-field.md` — `Node` subclasses now carry a `type` discriminator so structured LLM output deserializes to the correct `StartNode`/`EndNode`/`Step`/`Decision` subclass instead of collapsing to plain `Node`
 
 ## Tasks
 
