@@ -3,3 +3,4 @@ __pycache__/
 .venv/
 docs/learning/2026-08-23_structured_validation_feedback_grilling.md
 docs/scratchpad
+.env
