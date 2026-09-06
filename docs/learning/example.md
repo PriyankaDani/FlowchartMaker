@@ -10,12 +10,12 @@ This walks one piece of input text through the domain model defined in `CONTEXT.
 
 ```python
 nodes = [
-    StartNode(id="start", label="Start"),
-    Step(id="n1", label="Check email"),
-    Decision(id="n2", label="Urgent?"),
-    Step(id="n3", label="Reply now"),
-    Step(id="n4", label="Add to queue"),
-    EndNode(id="end1", label="End"),
+    StartNode(id="start", label="Start", type="start"),
+    Step(id="n1", label="Check email", type="step"),
+    Decision(id="n2", label="Urgent?", type="decision"),
+    Step(id="n3", label="Reply now", type="step"),
+    Step(id="n4", label="Add to queue", type="step"),
+    EndNode(id="end1", label="End", type="end"),
 ]
 
 edges = [

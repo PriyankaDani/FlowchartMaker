@@ -20,12 +20,12 @@ from flowchartmaker.domain.errors import (
 def _worked_example_nodes_edges():
     """From docs/learning/example.md."""
     nodes = [
-        StartNode(id="start", label="Start"),
-        Step(id="n1", label="Check email"),
-        Decision(id="n2", label="Urgent?"),
-        Step(id="n3", label="Reply now"),
-        Step(id="n4", label="Add to queue"),
-        EndNode(id="end1", label="End"),
+        StartNode(id="start", label="Start", type="start"),
+        Step(id="n1", label="Check email", type="step"),
+        Decision(id="n2", label="Urgent?", type="decision"),
+        Step(id="n3", label="Reply now", type="step"),
+        Step(id="n4", label="Add to queue", type="step"),
+        EndNode(id="end1", label="End", type="end"),
     ]
     edges = [
         Branch(source_id="start", target_id="n1", label=None),
@@ -56,7 +56,7 @@ def test_missing_start_node_raises():
 
 def test_two_start_nodes_raises():
     nodes, edges = _worked_example_nodes_edges()
-    start2 = StartNode(id="start2", label="Start2")
+    start2 = StartNode(id="start2", label="Start2", type="start")
     nodes.append(start2)
     with pytest.raises(FlowchartValidationError) as exc_info:
         Flowchart(nodes=nodes, edges=edges)
@@ -77,7 +77,7 @@ def test_zero_end_nodes_raises():
 
 def test_multiple_end_nodes_raises():
     nodes, edges = _worked_example_nodes_edges()
-    nodes.append(EndNode(id="end2", label="End2"))
+    nodes.append(EndNode(id="end2", label="End2", type="end"))
     edges.append(Branch(source_id="n3", target_id="end2", label=None))
     with pytest.raises(FlowchartValidationError) as exc_info:
         Flowchart(nodes=nodes, edges=edges)
@@ -99,7 +99,7 @@ def test_edge_referencing_nonexistent_node_raises():
 
 def test_unreachable_node_raises():
     nodes, edges = _worked_example_nodes_edges()
-    orphan = Step(id="orphan", label="Unreachable step")
+    orphan = Step(id="orphan", label="Unreachable step", type="step")
     nodes.append(orphan)
     with pytest.raises(FlowchartValidationError) as exc_info:
         Flowchart(nodes=nodes, edges=edges)
@@ -118,7 +118,7 @@ def test_cycle_validates_successfully():
 
 def test_distinct_ids_with_identical_labels_are_distinct_nodes():
     nodes, edges = _worked_example_nodes_edges()
-    nodes.append(Step(id="n5", label="Reply now"))
+    nodes.append(Step(id="n5", label="Reply now", type="step"))
     edges.append(Branch(source_id="n4", target_id="n5", label=None))
     edges.append(Branch(source_id="n5", target_id="end1", label=None))
     flowchart = Flowchart(nodes=nodes, edges=edges)
@@ -129,12 +129,12 @@ def test_distinct_ids_with_identical_labels_are_distinct_nodes():
 
 def test_decision_with_non_yes_no_branch_labels_validates():
     nodes = [
-        StartNode(id="start", label="Start"),
-        Decision(id="n1", label="Review outcome?"),
-        Step(id="n2", label="Ship it"),
-        Step(id="n3", label="Send back for edits"),
-        Step(id="n4", label="Archive"),
-        EndNode(id="end1", label="End"),
+        StartNode(id="start", label="Start", type="start"),
+        Decision(id="n1", label="Review outcome?", type="decision"),
+        Step(id="n2", label="Ship it", type="step"),
+        Step(id="n3", label="Send back for edits", type="step"),
+        Step(id="n4", label="Archive", type="step"),
+        EndNode(id="end1", label="End", type="end"),
     ]
     edges = [
         Branch(source_id="start", target_id="n1", label=None),
@@ -152,7 +152,7 @@ def test_decision_with_non_yes_no_branch_labels_validates():
 
 def test_duplicate_node_ids_raises():
     nodes, edges = _worked_example_nodes_edges()
-    nodes.append(Step(id="n1", label="Check email again"))
+    nodes.append(Step(id="n1", label="Check email again", type="step"))
     edges.append(Branch(source_id="n4", target_id="n1", label=None))
     with pytest.raises(FlowchartValidationError) as exc_info:
         Flowchart(nodes=nodes, edges=edges)
@@ -164,8 +164,8 @@ def test_duplicate_node_ids_raises():
 
 def test_multiple_simultaneous_failures_all_collected():
     nodes, edges = _worked_example_nodes_edges()
-    nodes.append(StartNode(id="start2", label="Start2"))
-    nodes.append(Step(id="n1", label="Check email again"))
+    nodes.append(StartNode(id="start2", label="Start2", type="start"))
+    nodes.append(Step(id="n1", label="Check email again", type="step"))
     edges.append(Branch(source_id="n4", target_id="n1", label=None))
     with pytest.raises(FlowchartValidationError) as exc_info:
         Flowchart(nodes=nodes, edges=edges)
@@ -176,8 +176,8 @@ def test_multiple_simultaneous_failures_all_collected():
 
 def test_to_llm_feedback_mentions_every_failure():
     nodes, edges = _worked_example_nodes_edges()
-    nodes.append(StartNode(id="start2", label="Start2"))
-    nodes.append(Step(id="n1", label="Check email again"))
+    nodes.append(StartNode(id="start2", label="Start2", type="start"))
+    nodes.append(Step(id="n1", label="Check email again", type="step"))
     edges.append(Branch(source_id="n4", target_id="n1", label=None))
     with pytest.raises(FlowchartValidationError) as exc_info:
         Flowchart(nodes=nodes, edges=edges)

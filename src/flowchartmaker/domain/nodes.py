@@ -9,16 +9,16 @@ class Node(BaseModel):
 
 
 class StartNode(Node):
-    type: Literal["start"] = "start"
+    type: Literal["start"]
 
 
 class EndNode(Node):
-    type: Literal["end"] = "end"
+    type: Literal["end"]
 
 
 class Step(Node):
-    type: Literal["step"] = "step"
+    type: Literal["step"]
 
 
 class Decision(Node):
-    type: Literal["decision"] = "decision"
+    type: Literal["decision"]
