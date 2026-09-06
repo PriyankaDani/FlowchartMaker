@@ -4,7 +4,17 @@ from flowchartmaker.domain.nodes import StartNode, EndNode, Step, Decision
 from flowchartmaker.domain.branch import Branch
 from flowchartmaker.domain.flowchart import Flowchart
 from flowchartmaker.domain.trace import ParseTrace, ParseResult
-from flowchartmaker.domain.errors import DuplicateNodeIdError, FlowchartValidationError
+from flowchartmaker.domain.errors import (
+    DanglingReferenceFailure,
+    DuplicateNodeIdFailure,
+    FlowchartValidationError,
+    MissingEndNodeFailure,
+    MissingStartNodeFailure,
+    MultipleEndNodesFailure,
+    MultipleStartNodesFailure,
+    SketchUnreadableError,
+    UnreachableNodeFailure,
+)
 
 
 def _worked_example_nodes_edges():
@@ -38,45 +48,64 @@ def test_worked_example_constructs_and_validates():
 def test_missing_start_node_raises():
     nodes, edges = _worked_example_nodes_edges()
     nodes = [n for n in nodes if not isinstance(n, StartNode)]
-    with pytest.raises(FlowchartValidationError):
+    with pytest.raises(FlowchartValidationError) as exc_info:
         Flowchart(nodes=nodes, edges=edges)
+    failures = exc_info.value.failures
+    assert any(isinstance(f, MissingStartNodeFailure) for f in failures)
 
 
 def test_two_start_nodes_raises():
     nodes, edges = _worked_example_nodes_edges()
-    nodes.append(StartNode(id="start2", label="Start2"))
-    with pytest.raises(FlowchartValidationError):
+    start2 = StartNode(id="start2", label="Start2")
+    nodes.append(start2)
+    with pytest.raises(FlowchartValidationError) as exc_info:
         Flowchart(nodes=nodes, edges=edges)
+    failures = exc_info.value.failures
+    multi_start = next(f for f in failures if isinstance(f, MultipleStartNodesFailure))
+    assert {n.id for n in multi_start.nodes} == {"start", "start2"}
 
 
 def test_zero_end_nodes_raises():
     nodes, edges = _worked_example_nodes_edges()
     nodes = [n for n in nodes if not isinstance(n, EndNode)]
     edges = [e for e in edges if e.target_id != "end1"]
-    with pytest.raises(FlowchartValidationError):
+    with pytest.raises(FlowchartValidationError) as exc_info:
         Flowchart(nodes=nodes, edges=edges)
+    failures = exc_info.value.failures
+    assert any(isinstance(f, MissingEndNodeFailure) for f in failures)
 
 
 def test_multiple_end_nodes_raises():
     nodes, edges = _worked_example_nodes_edges()
     nodes.append(EndNode(id="end2", label="End2"))
     edges.append(Branch(source_id="n3", target_id="end2", label=None))
-    with pytest.raises(FlowchartValidationError):
+    with pytest.raises(FlowchartValidationError) as exc_info:
         Flowchart(nodes=nodes, edges=edges)
+    failures = exc_info.value.failures
+    multi_end = next(f for f in failures if isinstance(f, MultipleEndNodesFailure))
+    assert {n.id for n in multi_end.nodes} == {"end1", "end2"}
 
 
 def test_edge_referencing_nonexistent_node_raises():
     nodes, edges = _worked_example_nodes_edges()
-    edges.append(Branch(source_id="n4", target_id="ghost", label=None))
-    with pytest.raises(FlowchartValidationError):
+    ghost_edge = Branch(source_id="n4", target_id="ghost", label=None)
+    edges.append(ghost_edge)
+    with pytest.raises(FlowchartValidationError) as exc_info:
         Flowchart(nodes=nodes, edges=edges)
+    failures = exc_info.value.failures
+    dangling = next(f for f in failures if isinstance(f, DanglingReferenceFailure))
+    assert dangling.edge == ghost_edge
 
 
 def test_unreachable_node_raises():
     nodes, edges = _worked_example_nodes_edges()
-    nodes.append(Step(id="orphan", label="Unreachable step"))
-    with pytest.raises(FlowchartValidationError):
+    orphan = Step(id="orphan", label="Unreachable step")
+    nodes.append(orphan)
+    with pytest.raises(FlowchartValidationError) as exc_info:
         Flowchart(nodes=nodes, edges=edges)
+    failures = exc_info.value.failures
+    unreachable = next(f for f in failures if isinstance(f, UnreachableNodeFailure))
+    assert {n.id for n in unreachable.nodes} == {"orphan"}
 
 
 def test_cycle_validates_successfully():
@@ -125,8 +154,42 @@ def test_duplicate_node_ids_raises():
     nodes, edges = _worked_example_nodes_edges()
     nodes.append(Step(id="n1", label="Check email again"))
     edges.append(Branch(source_id="n4", target_id="n1", label=None))
-    with pytest.raises(DuplicateNodeIdError):
+    with pytest.raises(FlowchartValidationError) as exc_info:
         Flowchart(nodes=nodes, edges=edges)
+    failures = exc_info.value.failures
+    duplicate = next(f for f in failures if isinstance(f, DuplicateNodeIdFailure))
+    assert len(duplicate.nodes) == 2
+    assert all(n.id == "n1" for n in duplicate.nodes)
+
+
+def test_multiple_simultaneous_failures_all_collected():
+    nodes, edges = _worked_example_nodes_edges()
+    nodes.append(StartNode(id="start2", label="Start2"))
+    nodes.append(Step(id="n1", label="Check email again"))
+    edges.append(Branch(source_id="n4", target_id="n1", label=None))
+    with pytest.raises(FlowchartValidationError) as exc_info:
+        Flowchart(nodes=nodes, edges=edges)
+    failures = exc_info.value.failures
+    assert any(isinstance(f, MultipleStartNodesFailure) for f in failures)
+    assert any(isinstance(f, DuplicateNodeIdFailure) for f in failures)
+
+
+def test_to_llm_feedback_mentions_every_failure():
+    nodes, edges = _worked_example_nodes_edges()
+    nodes.append(StartNode(id="start2", label="Start2"))
+    nodes.append(Step(id="n1", label="Check email again"))
+    edges.append(Branch(source_id="n4", target_id="n1", label=None))
+    with pytest.raises(FlowchartValidationError) as exc_info:
+        Flowchart(nodes=nodes, edges=edges)
+    feedback = exc_info.value.to_llm_feedback()
+    assert "start2" in feedback
+    assert "n1" in feedback
+    assert feedback.count("\n") >= 1
+
+
+def test_sketch_unreadable_error_exposes_reason_unchanged():
+    error = SketchUnreadableError("The sketch is too blurry to read; try a sharper photo.")
+    assert error.reason == "The sketch is too blurry to read; try a sharper photo."
 
 
 def test_parse_result_pairs_flowchart_with_trace():
