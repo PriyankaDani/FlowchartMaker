@@ -1,4 +1,6 @@
-from pydantic import BaseModel, model_validator
+from typing import Annotated, Union
+
+from pydantic import BaseModel, Field, model_validator
 
 from flowchartmaker.domain.branch import Branch
 from flowchartmaker.domain.errors import (
@@ -12,11 +14,15 @@ from flowchartmaker.domain.errors import (
     UnreachableNodeFailure,
     ValidationFailure,
 )
-from flowchartmaker.domain.nodes import EndNode, Node, StartNode
+from flowchartmaker.domain.nodes import Decision, EndNode, Node, StartNode, Step
+
+AnyNode = Annotated[
+    Union[StartNode, EndNode, Step, Decision], Field(discriminator="type")
+]
 
 
 class Flowchart(BaseModel):
-    nodes: list[Node]
+    nodes: list[AnyNode]
     edges: list[Branch]
 
     @model_validator(mode="after")

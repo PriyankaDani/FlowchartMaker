@@ -1,3 +1,5 @@
+from typing import Literal
+
 from pydantic import BaseModel
 
 
@@ -7,16 +9,16 @@ class Node(BaseModel):
 
 
 class StartNode(Node):
-    pass
+    type: Literal["start"] = "start"
 
 
 class EndNode(Node):
-    pass
+    type: Literal["end"] = "end"
 
 
 class Step(Node):
-    pass
+    type: Literal["step"] = "step"
 
 
 class Decision(Node):
-    pass
+    type: Literal["decision"] = "decision"
