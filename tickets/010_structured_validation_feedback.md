@@ -1,5 +1,5 @@
 ---
-status: Todo
+status: Done
 component: domain
 ---
 
@@ -30,17 +30,21 @@ Enrich `FlowchartValidationError` and `SketchUnreadableError` so they carry enou
 
 All tests green against Ollama-independent unit tests (no LLM dependency in this ticket):
 
-- [ ] A `Flowchart` with two `StartNode`s raises `FlowchartValidationError` whose `.failures` contains a `MultipleStartNodesFailure` referencing both `StartNode` instances
-- [ ] A `Flowchart` missing a `StartNode` raises with a `MissingStartNodeFailure` in `.failures`
-- [ ] A `Flowchart` with zero/multiple `EndNode`s raises with the corresponding failure in `.failures`
-- [ ] A `Flowchart` with an edge referencing a non-existent node id raises with a `DanglingReferenceFailure` referencing the offending `Branch`
-- [ ] A `Flowchart` with an unreachable node raises with an `UnreachableNodeFailure` referencing the unreachable `Node`(s)
-- [ ] A `Flowchart` with two nodes sharing an `id` raises with a `DuplicateNodeIdFailure` referencing both `Node`s
-- [ ] A `Flowchart` with **multiple simultaneous** problems (e.g. two `StartNode`s *and* a duplicate id) raises **one** `FlowchartValidationError` whose `.failures` contains **both** failures — proves aggregation, not fail-fast
-- [ ] `FlowchartValidationError.to_llm_feedback()` on a multi-failure error produces text mentioning every failure's specifics (node ids/labels involved), not just the first
-- [ ] `Flowchart` containing a cycle (loop-back edge) still validates successfully (no regression on ADR 0002 behavior)
-- [ ] `SketchUnreadableError("...")` exposes `.reason` unchanged (string in, string out)
-- [ ] Existing worked-example and cycle/label tests in `tests/domain/test_domain_model.py` continue to pass, updated where they asserted the now-removed `DuplicateNodeIdError`
+- [x] A `Flowchart` with two `StartNode`s raises `FlowchartValidationError` whose `.failures` contains a `MultipleStartNodesFailure` referencing both `StartNode` instances
+- [x] A `Flowchart` missing a `StartNode` raises with a `MissingStartNodeFailure` in `.failures`
+- [x] A `Flowchart` with zero/multiple `EndNode`s raises with the corresponding failure in `.failures`
+- [x] A `Flowchart` with an edge referencing a non-existent node id raises with a `DanglingReferenceFailure` referencing the offending `Branch`
+- [x] A `Flowchart` with an unreachable node raises with an `UnreachableNodeFailure` referencing the unreachable `Node`(s)
+- [x] A `Flowchart` with two nodes sharing an `id` raises with a `DuplicateNodeIdFailure` referencing both `Node`s
+- [x] A `Flowchart` with **multiple simultaneous** problems (e.g. two `StartNode`s *and* a duplicate id) raises **one** `FlowchartValidationError` whose `.failures` contains **both** failures — proves aggregation, not fail-fast
+- [x] `FlowchartValidationError.to_llm_feedback()` on a multi-failure error produces text mentioning every failure's specifics (node ids/labels involved), not just the first
+- [x] `Flowchart` containing a cycle (loop-back edge) still validates successfully (no regression on ADR 0002 behavior)
+- [x] `SketchUnreadableError("...")` exposes `.reason` unchanged (string in, string out)
+- [x] Existing worked-example and cycle/label tests in `tests/domain/test_domain_model.py` continue to pass, updated where they asserted the now-removed `DuplicateNodeIdError`
+
+## RCA Notes
+
+No failing tests were hit unexpectedly — the four `@model_validator(mode="after")` methods on `Flowchart` were collapsed into one `_validate` pass that builds a `list[ValidationFailure]` and raises once at the end, rather than raising on the first exception. `DuplicateNodeIdError` was removed; its case is now `DuplicateNodeIdFailure` inside the aggregate, matching the ticket's design intent. Each `ValidationFailure` subclass owns its own `describe()` method (dispatch by subclass, not by a central formatter), which is what `FlowchartValidationError.to_llm_feedback()` joins into one string reused as-is for end-user display after retries are exhausted.
 
 ## Follow-ups
 
