@@ -37,9 +37,11 @@ flowchartmaker/
                         # per the Node/Branch -> shape mapping in docs/learning/example.md
 
   web/
-    app.py            # Flask app factory
+    app.py            # Flask app factory; LazyPipeline builds the real pipeline on first request
+                        # (config errors surface as a message, not a crash) - see ADR 0009
     routes.py           # /, /parse (text or image upload), /svg (browser uploads its rendered SVG),
-                        # /download-svg (serves it back) — see ADR 0008
+                        # /download-svg (serves it back); repeat-submit cache and
+                        # LLM-unavailable -> 503 per ADR 0009 and 0008
     templates/          # input form, Mermaid render area, loading state, error message area
     static/            # vendored mermaid.min.js (offline-safe for the .exe), app.js, app.css
 
