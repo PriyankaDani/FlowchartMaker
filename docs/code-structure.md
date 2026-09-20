@@ -38,9 +38,10 @@ flowchartmaker/
 
   web/
     app.py            # Flask app factory
-    routes.py           # /parse (text or image upload), /download-svg
+    routes.py           # /, /parse (text or image upload), /svg (browser uploads its rendered SVG),
+                        # /download-svg (serves it back) — see ADR 0008
     templates/          # input form, Mermaid render area, loading state, error message area
-    static/            # client-side mermaid.js render + SVG export/download
+    static/            # vendored mermaid.min.js (offline-safe for the .exe), app.js, app.css
 
   config.py           # Settings: .env loading, LLM provider selection (Ollama vs Gemini), API key checks
                        # resolves paths (templates/static/.env) via resource_path() below,
