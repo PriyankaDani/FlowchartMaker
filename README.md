@@ -2,7 +2,7 @@
 
 Turn a plain-text process description — or a photo of a hand-drawn sketch — into a clean, rendered [Mermaid.js](https://mermaid.js.org/) flowchart, downloadable as SVG. No Mermaid syntax knowledge required.
 
-> **Status:** Pre-implementation. The domain model, parsing pipeline, and UI are still being built (see [Project Status](#project-status)). This README will grow setup/run instructions as those land, and a demo GIF will be added here once v1 is functional.
+> **Status:** v1 feature-complete; final packaging/verification of the Windows `.exe` is in progress (see [Project Status](#project-status)). A demo GIF will be added once the packaged build is verified end to end.
 
 ## What it does
 
@@ -38,24 +38,41 @@ Work is tracked as tickets in [`tickets/`](tickets). Current state:
 
 | Ticket | Component | Status |
 |---|---|---|
-| [001](tickets/001_domain_model.md) | Domain model | Todo |
-| [002](tickets/002_text_parsing_chain.md) | Text parsing chain | Todo |
-| [003](tickets/003_vision_parsing_chain.md) | Vision parsing chain | Todo |
-| [004](tickets/004_mermaid_renderer.md) | Mermaid renderer | Todo |
-| [005](tickets/005_web_ui_shell.md) | Web UI shell | Todo |
-| [006](tickets/006_text_vision_pipeline_int.md) | Text/vision pipeline integration | Todo |
-| [007](tickets/007_parsing_rendering_int.md) | Parsing/rendering integration | Todo |
-| [008](tickets/008_web_pipeline_int.md) | Web pipeline integration | Todo |
-| [009](tickets/009_fullsystem_int.md) | Full-system integration (`.exe`) | Todo |
+| [001](tickets/001_domain_model.md) | Domain model | Done |
+| [002](tickets/002_text_parsing_chain.md) | Text parsing chain | Done |
+| [003](tickets/003_vision_parsing_chain.md) | Vision parsing chain | Done |
+| [004](tickets/004_mermaid_renderer.md) | Mermaid renderer | Done |
+| [005](tickets/005_web_ui_shell.md) | Web UI shell | Done |
+| [006](tickets/006_text_vision_pipeline_int.md) | Text/vision pipeline integration | In Progress |
+| [007](tickets/007_parsing_rendering_int.md) | Parsing/rendering integration | Done |
+| [008](tickets/008_web_pipeline_int.md) | Web pipeline integration | Done |
+| [009](tickets/009_fullsystem_int.md) | Full-system integration (`.exe`) | In Progress |
+| [010](tickets/010_structured_validation_feedback.md) | Structured validation feedback | Done |
+| [011](tickets/011_llm_retry_loop.md) | LLM retry loop | Done |
 
-## Setup
+## Setup (from source)
 
-Once the domain model and app scaffolding land (ticket 001+), this section will cover:
+Requires [uv](https://docs.astral.sh/uv/). Do not use `pip` or manage a virtualenv by hand.
 
-- Installing dependencies with `uv sync`
-- Configuring `.env` (LLM provider selection, API keys) from a provided `.env.example`
-- Running the app locally with `uv run`
-- Running the local (Ollama) test suite with `uv run pytest`
+1. Install dependencies: `uv sync`
+2. Create a `.env` in the repo root from the template: copy `packaging/.env.example` to `.env`, then set:
+   - `LLM_PROVIDER` — `gemini` (default) or `ollama`.
+   - `GEMINI_API_KEY` — required when `LLM_PROVIDER=gemini`. Optionally `GEMINI_MODEL` (default `gemini-2.5-flash`).
+   - For Ollama: make sure Ollama is running; optionally set `OLLAMA_BASE_URL`, `OLLAMA_MODEL`, `OLLAMA_VISION_MODEL`.
+3. Run the app: `uv run flowchartmaker`. It opens your browser on a free `127.0.0.1` port.
+
+If the LLM configuration is missing or invalid, the app prints what is missing and where the `.env` should be, then exits with code 1.
+
+Run the tests with `uv run pytest`. The live tests in `tests/integration/` drive a real browser and a real LLM (Chromium plus Ollama), so they are heavy and need those services available.
+
+## Building the Windows `.exe`
+
+1. `uv sync` (the dev group includes PyInstaller).
+2. `uv run pyinstaller packaging/app.spec --noconfirm`
+3. The output is a one-dir build at `dist/flowchartmaker/`. Keep the whole folder together; the entry point is `dist/flowchartmaker/flowchartmaker.exe`.
+4. Copy `packaging/.env.example` to `dist/flowchartmaker/.env` (next to the exe) and fill it in, then run the exe.
+
+The packaged app needs no Python or uv installed. Its `.env` is read from the folder containing the exe.
 
 ## Out of scope (v1)
 
