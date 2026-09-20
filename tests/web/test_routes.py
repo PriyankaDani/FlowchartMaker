@@ -132,3 +132,96 @@ def test_index_page_has_form_loading_and_error_areas(client):
 
     for element_id in ("parse-form", "text-input", "image-input", "loading", "error", "diagram"):
         assert f'id="{element_id}"' in html
+
+
+# --- ticket 008: LLM-unavailable mapping, repeat-submit caching, lazy pipeline ---
+
+from flowchartmaker.llm.provider import LLMConfigurationError  # noqa: E402
+from flowchartmaker.web.app import LazyPipeline  # noqa: E402
+
+
+@pytest.mark.parametrize(
+    "exc",
+    [LLMConfigurationError("Could not reach Ollama at 'x'. Is Ollama running?"), ConnectionError("refused")],
+)
+def test_llm_unavailable_maps_to_503_message(client, pipeline, exc):
+    pipeline.parse_text.side_effect = exc
+
+    resp = client.post("/parse", data={"text": "x"})
+
+    assert resp.status_code == 503
+    assert "language model" in resp.get_json()["error"].lower()
+    assert "Ollama at" not in resp.get_data(as_text=True)
+    assert "Traceback" not in resp.get_data(as_text=True)
+
+
+def test_unexpected_error_is_generic_500_not_a_stack_trace(client, pipeline):
+    pipeline.parse_text.side_effect = RuntimeError("boom")
+
+    resp = client.post("/parse", data={"text": "x"})
+
+    assert resp.status_code == 500
+    assert "boom" not in resp.get_data(as_text=True)
+    assert resp.get_json()["error"]
+
+
+def test_identical_text_resubmitted_does_not_call_pipeline_again(client, pipeline):
+    first = client.post("/parse", data={"text": "do a thing"})
+    second = client.post("/parse", data={"text": "do a thing"})
+
+    assert first.get_json() == second.get_json()
+    assert pipeline.parse_text.call_count == 1
+
+
+def test_changed_text_calls_pipeline_again(client, pipeline):
+    client.post("/parse", data={"text": "a"})
+    client.post("/parse", data={"text": "b"})
+
+    assert pipeline.parse_text.call_count == 2
+
+
+def test_failed_parse_is_not_cached(client, pipeline):
+    pipeline.parse_text.side_effect = [SketchUnreadableError("x"), _result()]
+
+    assert client.post("/parse", data={"text": "a"}).status_code == 422
+    assert client.post("/parse", data={"text": "a"}).status_code == 200
+
+
+def test_identical_image_resubmitted_does_not_call_pipeline_again(client, pipeline):
+    for _ in range(2):
+        client.post("/parse", data={"image": (io.BytesIO(b"png"), "s.png")})
+
+    assert pipeline.parse_image.call_count == 1
+
+
+def test_cache_hit_still_invalidates_previous_svg(client):
+    client.post("/parse", data={"text": "a"})
+    client.post("/svg", data=SVG, content_type="image/svg+xml")
+    client.post("/parse", data={"text": "a"})
+
+    assert client.get("/download-svg").status_code == 404
+
+
+def test_lazy_pipeline_builds_once_on_first_use():
+    built = MagicMock()
+    factory = MagicMock(return_value=built)
+    lazy = LazyPipeline(factory)
+    factory.assert_not_called()
+
+    lazy.parse_text("a")
+    lazy.parse_text("b")
+
+    factory.assert_called_once()
+    assert built.parse_text.call_count == 2
+
+
+def test_lazy_pipeline_retries_build_after_config_failure():
+    good = MagicMock()
+    factory = MagicMock(side_effect=[LLMConfigurationError("down"), good])
+    lazy = LazyPipeline(factory)
+
+    with pytest.raises(LLMConfigurationError):
+        lazy.parse_text("a")
+    lazy.parse_text("a")
+
+    good.parse_text.assert_called_once_with("a")
