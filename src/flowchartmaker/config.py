@@ -1,8 +1,27 @@
 import os
+import sys
+from pathlib import Path
 
 from dotenv import load_dotenv
 
-load_dotenv()
+
+def resource_path(relative: str, *, writable: bool = False) -> Path:
+    """Resolve `relative` identically in dev and frozen (PyInstaller) mode.
+
+    Bundled read-only assets (`writable=False`) live under `sys._MEIPASS` when frozen, and under
+    `src/` in dev, so the same package-relative path ("flowchartmaker/web/templates") works in both.
+    User-editable files such as `.env` (`writable=True`) live next to the executable when frozen
+    (the bundle dir is a temp dir), and at the repo root in dev.
+    """
+    frozen = getattr(sys, "frozen", False)
+    if writable:
+        base = Path(sys.executable).parent if frozen else Path(__file__).resolve().parents[2]
+    else:
+        base = Path(sys._MEIPASS) if frozen else Path(__file__).resolve().parents[1]
+    return base / relative
+
+
+load_dotenv(resource_path(".env", writable=True))
 
 
 class Settings:

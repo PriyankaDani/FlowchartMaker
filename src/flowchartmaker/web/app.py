@@ -2,7 +2,7 @@ from collections.abc import Callable
 
 from flask import Flask
 
-from flowchartmaker.config import Settings
+from flowchartmaker.config import Settings, resource_path
 from flowchartmaker.domain.trace import ParseResult
 from flowchartmaker.llm.provider import LLMProvider
 from flowchartmaker.parsing.pipeline import ParsingPipeline
@@ -40,7 +40,11 @@ def build_pipeline(settings: Settings | None = None) -> ParsingPipeline:
 
 def create_app(pipeline) -> Flask:
     """Flask app factory. `pipeline` is any object with parse_text/parse_image -> ParseResult."""
-    app = Flask(__name__)
+    app = Flask(
+        __name__,
+        template_folder=str(resource_path("flowchartmaker/web/templates")),
+        static_folder=str(resource_path("flowchartmaker/web/static")),
+    )
     register_routes(app, pipeline, MermaidRenderer(), DiagramStore())
     return app
 

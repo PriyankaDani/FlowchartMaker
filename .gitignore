@@ -5,3 +5,5 @@ docs/learning/2026-08-23_structured_validation_feedback_grilling.md
 docs/learning/2026_09_20_subagents_fork_understanding.md
 docs/scratchpad
 .env
+build/
+dist/
