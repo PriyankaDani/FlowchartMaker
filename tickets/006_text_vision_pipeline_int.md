@@ -1,5 +1,5 @@
 ---
-status: Todo
+status: In Progress
 component: text_vision_pipeline_int
 ---
 

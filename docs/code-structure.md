@@ -30,6 +30,7 @@ flowchartmaker/
                         # routes text input directly to TextParsingChain;
                         # routes image input through VisionParsingChain, then TextParsingChain;
                         # both paths return ParseResult(flowchart, trace)
+                        # text stage is wrapped in RetryingParser for both paths (ADR 0007)
 
   rendering/
     mermaid_renderer.py  # MermaidRenderer: Flowchart -> Mermaid flowchart syntax (string),
