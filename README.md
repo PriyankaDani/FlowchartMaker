@@ -16,7 +16,7 @@ See [`docs/PRD.md`](docs/PRD.md) for target user and success criteria, and [`doc
 
 ## Stack
 
-- **Python only** — Streamlit UI, Mermaid rendering via component/HTML.
+- **Python only** — Flask UI, Mermaid.js rendering via static JS.
 - **Pydantic** for structured/validated data (steps, decisions, branches, LLM output).
 - **LangChain** for LLM orchestration (text and image parsing), so providers can be swapped without rewriting call logic.
 - **Ollama** for local/test LLM calls (no cost, no rate limits); a Gemini API pass is used for polish/validation before a feature is considered fully done.
