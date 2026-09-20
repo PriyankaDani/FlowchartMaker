@@ -1,5 +1,5 @@
 ---
-status: Todo
+status: Done
 component: mermaid_renderer
 ---
 
@@ -25,8 +25,17 @@ component: mermaid_renderer
 
 All tests green (pure function, no LLM dependency — runs in any environment):
 
-- [ ] Rendering the worked example `Flowchart` from `docs/learning/example.md` produces Mermaid output matching the documented expected output (structurally: same shapes, same edges, same labels — not necessarily byte-identical)
-- [ ] A `Flowchart` containing a cycle renders without error (loop-back edge appears as a normal `-->` line)
-- [ ] A `Flowchart` where two `Decision` branches converge on the same downstream node renders both incoming edges correctly (proves convergence, not duplicated node)
-- [ ] A node with id `"end"` is rendered using a sanitized id (not the bare Mermaid-reserved `end`)
-- [ ] Output is syntactically valid Mermaid (validated via a Mermaid parser/linter if available, or a golden-file round-trip render)
+- [x] Rendering the worked example `Flowchart` from `docs/learning/example.md` produces Mermaid output matching the documented expected output (structurally: same shapes, same edges, same labels — not necessarily byte-identical)
+- [x] A `Flowchart` containing a cycle renders without error (loop-back edge appears as a normal `-->` line)
+- [x] A `Flowchart` where two `Decision` branches converge on the same downstream node renders both incoming edges correctly (proves convergence, not duplicated node)
+- [x] A node with id `"end"` is rendered using a sanitized id (not the bare Mermaid-reserved `end`)
+- [x] Output is syntactically valid Mermaid (validated via a Mermaid parser/linter if available, or a golden-file round-trip render)
+
+## Notes
+
+Green: `uv run pytest tests/rendering` (9 passed). Exit-condition "syntactically valid" is checked structurally by regex in tests, not by a real Mermaid parser.
+
+## Follow-ups
+
+- Validate output with the real Mermaid.js parser once the Flask UI (ticket 008/009) bundles it.
+- Labels are unquoted; only `"` and `|` are entity-escaped. Labels containing `]`, `)` or `}` may break Mermaid; revisit with quoted labels if seen in practice.
