@@ -1,0 +1,8 @@
+body { font-family: system-ui, sans-serif; margin: 0; background: #fafafa; color: #222; }
+main { max-width: 760px; margin: 2rem auto; padding: 0 1rem; }
+form { display: flex; flex-direction: column; gap: .5rem; }
+textarea { font: inherit; padding: .5rem; }
+button { align-self: flex-start; padding: .5rem 1rem; font: inherit; cursor: pointer; }
+[hidden] { display: none !important; }
+#error { color: #b00020; }
+#diagram { margin-top: 1.5rem; overflow-x: auto; }

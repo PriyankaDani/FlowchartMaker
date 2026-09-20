@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>FlowchartMaker</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='app.css') }}">
+</head>
+<body>
+  <main>
+    <h1>FlowchartMaker</h1>
+    <form id="parse-form">
+      <label for="text-input">Describe your process</label>
+      <textarea id="text-input" name="text" rows="6"></textarea>
+      <label for="image-input">…or upload a sketch</label>
+      <input id="image-input" name="image" type="file" accept="image/*">
+      <button type="submit">Generate flowchart</button>
+    </form>
+    <p id="loading" hidden>Working on your flowchart…</p>
+    <p id="error" role="alert" hidden></p>
+    <section id="diagram" hidden></section>
+    <a id="download" href="/download-svg" download hidden>Download SVG</a>
+  </main>
+  <script src="{{ url_for('static', filename='mermaid.min.js') }}"></script>
+  <script src="{{ url_for('static', filename='app.js') }}"></script>
+</body>
+</html>
