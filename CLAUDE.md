@@ -13,7 +13,7 @@
 
 ## Stack
 
-- Python only: Streamlit for the app UI (Mermaid rendering via component/HTML), packaged as a local `.exe` (PyInstaller) for v1. No JS/Node layer.
+- Python only: Flask for the app UI (Mermaid.js rendering via static JS, `waitress` for the packaged build's WSGI server), packaged as a local `.exe` (PyInstaller) for v1. No JS/Node layer beyond that client-side Mermaid rendering. Resolves the Flask/Streamlit either-or left open in `docs/projectbrief.md` — `docs/code-structure.md` and tickets 005/008/009 are already built against Flask.
 - Distribution for v1: `.exe` + demo video in repo. Vercel/hosted deploy is a later, separate ticket — don't build toward it prematurely.
 
 ## Environment — uv
@@ -41,6 +41,15 @@ Red-green-refactor, in that order: write the failing test, then the implementati
 - Each ticket carries YAML frontmatter with at least a `status` field: `Todo`, `In Progress`, or `Done`.
 - Closing a ticket: once its tests run green, update the ticket. If open sub-items remain that can't be completed now, flag them explicitly in the ticket (a `## Follow-ups` section is fine) before setting `status: Done` — don't silently drop scope.
 - **Mid-ticket architectural decisions:** if a real decision gets made while implementing (not just following the plan), write an ADR for it in `docs/adr/` before closing the ticket — don't let it live only in code or chat history.
+
+## Baseline Consistency Check
+
+Every design decision — a new ADR, a ticket write-up, or a change to `CLAUDE.md`/`CONTEXT.md`/`docs/code-structure.md` — gets checked against the other baseline docs before it's considered final, not after drift is noticed later:
+
+- Baseline set: `CLAUDE.md`, `CONTEXT.md`, `docs/projectbrief.md`, `docs/PRD.md`, `docs/code-structure.md`, `docs/adr/`.
+- Grep the baseline set for the decision's key terms (e.g. a framework name, an entity name, a package path) before treating the decision as settled.
+- If a conflict turns up: it's not automatically the newer doc that wins. Resolve it explicitly — state which doc is authoritative for that concern and why (e.g. `code-structure.md` wins over `projectbrief.md` on implementation choices once tickets are built against it), then update every doc that disagrees in the same change. Don't leave the older doc silently contradicting the new one.
+- If the conflict traces back to an earlier either/or that was never closed out (like Flask-or-Streamlit was), say so explicitly in the doc being fixed — it's a different situation than a doc simply going stale.
 
 ## Commits
 
