@@ -24,6 +24,8 @@ flowchartmaker/
                         # Pydantic-validated against the Flowchart schema
     vision_chain.py      # VisionParsingChain: sketch image -> free-form Sketch description (str),
                         # raises SketchUnreadableError on low-confidence read
+    retry_loop.py       # RetryingParser: wraps any parse-once callable; on FlowchartValidationError
+                        # re-prompts statelessly with previous output + to_llm_feedback(), bounded retries
     pipeline.py         # ParsingPipeline: single entry point used by the UI.
                         # routes text input directly to TextParsingChain;
                         # routes image input through VisionParsingChain, then TextParsingChain;
@@ -67,6 +69,7 @@ tests/
 | Domain model | `domain/` | — | `001_domain_model` |
 | Text parsing chain | `parsing/text_chain.py`, `parsing/prompts.py`, `llm/provider.py` | Domain model | `002_text_parsing_chain` |
 | Vision parsing chain | `parsing/vision_chain.py` | Domain model, `llm/provider.py` | `003_vision_parsing_chain` |
+| Retry loop | `parsing/retry_loop.py` | Domain errors | `011_llm_retry_loop` |
 | Mermaid renderer | `rendering/mermaid_renderer.py` | Domain model | `004_mermaid_renderer` |
 | Web UI shell | `web/` | — (built/tested against mocked pipeline output) | `005_web_ui_shell` |
 | — | `parsing/pipeline.py` | Text chain + Vision chain | wired in `006_text_vision_pipeline_int` |
