@@ -36,3 +36,10 @@ Packages the app as a standalone PyInstaller `.exe` and proves the complete user
 ## Follow-ups
 
 - None expected at ticket creation time; if v1 scope items are deferred during this pass, list them here before closing rather than dropping silently (per `CLAUDE.md`).
+
+## RCA notes
+
+- **First trial build failed: `script '...\packaging\src\flowchartmaker\main.py' not found`.**
+  - Cause: `packaging/app.spec` used repo-root-relative paths (`src/...`, `packaging/.env.example`), but PyInstaller resolves relative spec paths from the spec's own directory (`packaging/`), not the cwd.
+  - Fix: build a `ROOT` from `SPECPATH` (`os.path.abspath(os.path.join(SPECPATH, ".."))`) and use it for the entry script, `pathex` and `datas`.
+  - Result: `uv run pyinstaller packaging/app.spec --noconfirm` completes; `dist/flowchartmaker/flowchartmaker.exe` starts and, with no `.env` and `GEMINI_API_KEY` unset, prints the missing-key message naming the `.env` path beside the exe (no traceback, no hang). No hidden-import errors surfaced in this start-only check.
