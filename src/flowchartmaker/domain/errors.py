@@ -94,8 +94,13 @@ class FlowchartValidationError(Exception):
     can be driven from the same aggregate.
     """
 
-    def __init__(self, failures: list[ValidationFailure]) -> None:
+    def __init__(
+        self, failures: list[ValidationFailure], raw_output: str | None = None
+    ) -> None:
         self.failures = failures
+        # The LLM output that produced the invalid flowchart, when the raiser knows it.
+        # Optional: `Flowchart` validation itself has no access to it (see ADR 0006).
+        self.raw_output = raw_output
         super().__init__(self.to_llm_feedback())
 
     def to_llm_feedback(self) -> str:
